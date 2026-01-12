@@ -41,7 +41,7 @@ GO
 ### Install Python Dependencies
 
 ```bash
-cd I:\Yog\Training\QuestpondAI\Cohort\AIML\Cohort2\MyWork\RecruiterAI\wwwroot
+cd <root folder>
 pip install -r requirements.txt
 ```
 
