@@ -1,0 +1,58 @@
+[
+  {
+    "job_title": "Information Technology Intern (Test Automation Engineer)",
+    "organization": "Company Name City, State",
+    "start_date_raw": "05/2017",
+    "end_date_raw": "08/2017",
+    "technologies": ["Selenium WebDriver", "Spring Boot", "AngularJS", "Jenkins", "Cucumber", "JIRA", "Java", "REST", "MySQL", "PostgreSQL", "Oracle", "MongoDB", "Maven", "Gradle", "Ant", "Linux", "Windows"],
+    "responsibilities": [
+      "Created a test automation framework for application testing",
+      "Used Selenium WebDriver and Spring Boot for automation",
+      "Integrated Cucumber for behavior-driven development (BDD)",
+      "Implemented continuous integration with Jenkins",
+      "Collaborated with teams using JIRA for task management",
+      "Optimized test execution using Maven and Gradle"
+    ]
+  },
+  {
+    "job_title": "Java Full Stack Developer",
+    "organization": "Company Name City, State",
+    "start_date_raw": "05/2014",
+    "end_date_raw": "06/2016",
+    "technologies": ["Java", "Spring Framework", "SOA", "Spring Data JPA", "Hibernate", "RESTful Web Services", "Maven", "JUnit", "MySQL", "PostgreSQL", "Oracle", "MongoDB", "H2", "Linux", "Windows"],
+    "responsibilities": [
+      "Developed full-stack applications using Java and Spring",
+      "Implemented service-oriented architecture (SOA)",
+      "Used Hibernate for ORM and Spring Data JPA for database interactions",
+      "Built RESTful web services for API integration",
+      "Utilized Maven for dependency management and JUnit for testing",
+      "Optimized database performance with MySQL, PostgreSQL, and Oracle"
+    ]
+  },
+  {
+    "job_title": "Java Developer Intern",
+    "organization": "Company Name City, State",
+    "start_date_raw": "03/2014",
+    "end_date_raw": "05/2014",
+    "technologies": ["Java 1.7", "Java Swing", "JDBC", "SQL Server", "JUnit", "HTML", "CSS", "Linux", "Windows"],
+    "responsibilities": [
+      "Developed MRP (Material Requirements Planning) module using Core Java and Java Swing",
+      "Implemented JDBC for database connectivity with SQL Server",
+      "Optimized search engine performance for Nepal Tourism Board (NTB)",
+      "Used JUnit for unit testing and ensuring code quality"
+    ]
+  },
+  {
+    "job_title": "Software Developer Intern",
+    "organization": "Company Name City, State",
+    "start_date_raw": "01/2013",
+    "end_date_raw": "10/2013",
+    "technologies": ["PHP", "CodeIgniter", "MySQL", "Git", "OpenERP", "HTML", "CSS", "Linux", "Windows"],
+    "responsibilities": [
+      "Developed applications using PHP and CodeIgniter framework",
+      "Built CMS (Content Management System) and file-crawler tools",
+      "Used Git for version control and OpenERP for business process management",
+      "Collaborated on Android-controlled robot projects and technical presentations"
+    ]
+  }
+]

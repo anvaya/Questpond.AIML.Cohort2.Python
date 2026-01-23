@@ -1,0 +1,412 @@
+Professional Profile: {
+  "candidate_roles": [
+    {
+      "title": "Information Technology Intern (Test Automation Engineer)",
+      "verified_duration": 3,
+      "tech_stack": [
+        {
+          "standard_name": "tools for ICT test automation",
+          "esco_id": "http://data.europa.eu/esco/skill/7557f0f4-b8bc-4ac0-b91e-222ab1ba744f",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Spring Boot",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "computer programming",
+          "esco_id": "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Jenkins (tools for software configuration management)",
+          "esco_id": "http://data.europa.eu/esco/skill/f47a1998-0beb-43be-9f46-380aa4d183da",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Cucumber",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "JIRA",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "Java (computer programming)",
+          "esco_id": "http://data.europa.eu/esco/skill/19a8293b-8e95-4de3-983f-77484079c389",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "OWASP ZAP",
+          "esco_id": "http://data.europa.eu/esco/skill/1ce4cddd-4a74-458e-a2d4-152ca939475a",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "MySQL",
+          "esco_id": "http://data.europa.eu/esco/skill/4da171e5-779c-4983-a76f-91c16751e99f",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "PostgreSQL",
+          "esco_id": "http://data.europa.eu/esco/skill/a8d07b5a-c1a1-42c6-9d53-db9c7a2ca996",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Oracle Relational Database",
+          "esco_id": "http://data.europa.eu/esco/skill/de9f85ba-e77f-48fd-8c66-f5ebaf32d655",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "MongoDB",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "Apache Maven",
+          "esco_id": "http://data.europa.eu/esco/skill/0d168770-4d9c-4096-b048-a6577818d306",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Gradle",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "Ant",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "Kali Linux",
+          "esco_id": "http://data.europa.eu/esco/skill/625b57ee-29d4-425b-bf99-9fd54dd021fe",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Windows Phone",
+          "esco_id": "http://data.europa.eu/esco/skill/968ea96d-42d0-44fe-94b0-f11d84a8234d",
+          "is_standardized": true
+        }
+      ]
+    },
+    {
+      "title": "Java Full Stack Developer",
+      "verified_duration": 25,
+      "tech_stack": [
+        {
+          "standard_name": "Java (computer programming)",
+          "esco_id": "http://data.europa.eu/esco/skill/19a8293b-8e95-4de3-983f-77484079c389",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "mobile device software frameworks",
+          "esco_id": "http://data.europa.eu/esco/skill/b8c01891-e3df-4a4b-948d-95b45e1788f5",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "SOA",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "data warehouse",
+          "esco_id": "http://data.europa.eu/esco/skill/3ec2e4d6-7000-4905-bf1a-c5b1679416de",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Hibernate",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "web application security threats",
+          "esco_id": "http://data.europa.eu/esco/skill/902fb91c-3113-4004-9b4f-79aa86b638b7",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Apache Maven",
+          "esco_id": "http://data.europa.eu/esco/skill/0d168770-4d9c-4096-b048-a6577818d306",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "JUnit",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "MySQL",
+          "esco_id": "http://data.europa.eu/esco/skill/4da171e5-779c-4983-a76f-91c16751e99f",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "PostgreSQL",
+          "esco_id": "http://data.europa.eu/esco/skill/a8d07b5a-c1a1-42c6-9d53-db9c7a2ca996",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Oracle Relational Database",
+          "esco_id": "http://data.europa.eu/esco/skill/de9f85ba-e77f-48fd-8c66-f5ebaf32d655",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "MongoDB",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "H2",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "Kali Linux",
+          "esco_id": "http://data.europa.eu/esco/skill/625b57ee-29d4-425b-bf99-9fd54dd021fe",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Windows Phone",
+          "esco_id": "http://data.europa.eu/esco/skill/968ea96d-42d0-44fe-94b0-f11d84a8234d",
+          "is_standardized": true
+        }
+      ]
+    },
+    {
+      "title": "Java Developer Intern",
+      "verified_duration": 2,
+      "tech_stack": [
+        {
+          "standard_name": "JavaScript",
+          "esco_id": "http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Java (computer programming)",
+          "esco_id": "http://data.europa.eu/esco/skill/19a8293b-8e95-4de3-983f-77484079c389",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "JDBC",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "SQL Server",
+          "esco_id": "http://data.europa.eu/esco/skill/c062bab3-3ea0-4291-9220-a2d8fef4bead",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "JUnit",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "use markup languages",
+          "esco_id": "http://data.europa.eu/esco/skill/0af062de-eb43-41e9-9b96-249e2cd22d26",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "CSS",
+          "esco_id": "http://data.europa.eu/esco/skill/e5d1f825-60ed-4bdd-872a-e748c387f777",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Kali Linux",
+          "esco_id": "http://data.europa.eu/esco/skill/625b57ee-29d4-425b-bf99-9fd54dd021fe",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Windows Phone",
+          "esco_id": "http://data.europa.eu/esco/skill/968ea96d-42d0-44fe-94b0-f11d84a8234d",
+          "is_standardized": true
+        }
+      ]
+    },
+    {
+      "title": "Software Developer Intern",
+      "verified_duration": 9,
+      "tech_stack": [
+        {
+          "standard_name": "PHP",
+          "esco_id": "http://data.europa.eu/esco/skill/4350c38d-0fe9-4ca7-bab9-40ed7f72b04f",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "CodeIgniter",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "MySQL",
+          "esco_id": "http://data.europa.eu/esco/skill/4da171e5-779c-4983-a76f-91c16751e99f",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "tools for software configuration management",
+          "esco_id": "http://data.europa.eu/esco/skill/9d2e926f-53d9-41f5-98f3-19dfaa687f3f",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "OpenERP",
+          "esco_id": null,
+          "is_standardized": false
+        },
+        {
+          "standard_name": "use markup languages",
+          "esco_id": "http://data.europa.eu/esco/skill/0af062de-eb43-41e9-9b96-249e2cd22d26",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "CSS",
+          "esco_id": "http://data.europa.eu/esco/skill/e5d1f825-60ed-4bdd-872a-e748c387f777",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Kali Linux",
+          "esco_id": "http://data.europa.eu/esco/skill/625b57ee-29d4-425b-bf99-9fd54dd021fe",
+          "is_standardized": true
+        },
+        {
+          "standard_name": "Windows Phone",
+          "esco_id": "http://data.europa.eu/esco/skill/968ea96d-42d0-44fe-94b0-f11d84a8234d",
+          "is_standardized": true
+        }
+      ]
+    }
+  ],
+  "tech_seniority_matrix": {
+    "http://data.europa.eu/esco/skill/7557f0f4-b8bc-4ac0-b91e-222ab1ba744f": {
+      "name": "tools for ICT test automation",
+      "total_months": 3
+    },
+    "spring boot": {
+      "name": "Spring Boot",
+      "total_months": 3
+    },
+    "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97": {
+      "name": "computer programming",
+      "total_months": 3
+    },
+    "http://data.europa.eu/esco/skill/f47a1998-0beb-43be-9f46-380aa4d183da": {
+      "name": "Jenkins (tools for software configuration management)",
+      "total_months": 3
+    },
+    "cucumber": {
+      "name": "Cucumber",
+      "total_months": 3
+    },
+    "jira": {
+      "name": "JIRA",
+      "total_months": 3
+    },
+    "http://data.europa.eu/esco/skill/19a8293b-8e95-4de3-983f-77484079c389": {
+      "name": "Java (computer programming)",
+      "total_months": 30
+    },
+    "http://data.europa.eu/esco/skill/1ce4cddd-4a74-458e-a2d4-152ca939475a": {
+      "name": "OWASP ZAP",
+      "total_months": 3
+    },
+    "http://data.europa.eu/esco/skill/4da171e5-779c-4983-a76f-91c16751e99f": {
+      "name": "MySQL",
+      "total_months": 37
+    },
+    "http://data.europa.eu/esco/skill/a8d07b5a-c1a1-42c6-9d53-db9c7a2ca996": {
+      "name": "PostgreSQL",
+      "total_months": 28
+    },
+    "http://data.europa.eu/esco/skill/de9f85ba-e77f-48fd-8c66-f5ebaf32d655": {
+      "name": "Oracle Relational Database",
+      "total_months": 28
+    },
+    "mongodb": {
+      "name": "MongoDB",
+      "total_months": 28
+    },
+    "http://data.europa.eu/esco/skill/0d168770-4d9c-4096-b048-a6577818d306": {
+      "name": "Apache Maven",
+      "total_months": 28
+    },
+    "gradle": {
+      "name": "Gradle",
+      "total_months": 3
+    },
+    "ant": {
+      "name": "Ant",
+      "total_months": 3
+    },
+    "http://data.europa.eu/esco/skill/625b57ee-29d4-425b-bf99-9fd54dd021fe": {
+      "name": "Kali Linux",
+      "total_months": 39
+    },
+    "http://data.europa.eu/esco/skill/968ea96d-42d0-44fe-94b0-f11d84a8234d": {
+      "name": "Windows Phone",
+      "total_months": 39
+    },
+    "http://data.europa.eu/esco/skill/b8c01891-e3df-4a4b-948d-95b45e1788f5": {
+      "name": "mobile device software frameworks",
+      "total_months": 25
+    },
+    "soa": {
+      "name": "SOA",
+      "total_months": 25
+    },
+    "http://data.europa.eu/esco/skill/3ec2e4d6-7000-4905-bf1a-c5b1679416de": {
+      "name": "data warehouse",
+      "total_months": 25
+    },
+    "hibernate": {
+      "name": "Hibernate",
+      "total_months": 25
+    },
+    "http://data.europa.eu/esco/skill/902fb91c-3113-4004-9b4f-79aa86b638b7": {
+      "name": "web application security threats",
+      "total_months": 25
+    },
+    "junit": {
+      "name": "JUnit",
+      "total_months": 27
+    },
+    "h2": {
+      "name": "H2",
+      "total_months": 25
+    },
+    "http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7": {
+      "name": "JavaScript",
+      "total_months": 2
+    },
+    "jdbc": {
+      "name": "JDBC",
+      "total_months": 2
+    },
+    "http://data.europa.eu/esco/skill/c062bab3-3ea0-4291-9220-a2d8fef4bead": {
+      "name": "SQL Server",
+      "total_months": 2
+    },
+    "http://data.europa.eu/esco/skill/0af062de-eb43-41e9-9b96-249e2cd22d26": {
+      "name": "use markup languages",
+      "total_months": 11
+    },
+    "http://data.europa.eu/esco/skill/e5d1f825-60ed-4bdd-872a-e748c387f777": {
+      "name": "CSS",
+      "total_months": 11
+    },
+    "http://data.europa.eu/esco/skill/4350c38d-0fe9-4ca7-bab9-40ed7f72b04f": {
+      "name": "PHP",
+      "total_months": 9
+    },
+    "codeigniter": {
+      "name": "CodeIgniter",
+      "total_months": 9
+    },
+    "http://data.europa.eu/esco/skill/9d2e926f-53d9-41f5-98f3-19dfaa687f3f": {
+      "name": "tools for software configuration management",
+      "total_months": 9
+    },
+    "openerp": {
+      "name": "OpenERP",
+      "total_months": 9
+    }
+  }
+}

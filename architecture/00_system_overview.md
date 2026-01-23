@@ -1,4 +1,4 @@
-# ATS System - Architecture Overview
+# ATS System - Architecture Overview (Revised)
 
 ## Document Index
 
@@ -13,7 +13,7 @@ This folder contains detailed architecture documents for each major component of
 
 ## Executive Summary
 
-The ATS (Applicant Tracking System) is an AI-powered proof-of-concept application that demonstrates intelligent resume parsing and semantic candidate matching. The system processes unstructured PDF resumes into structured candidate profiles, then matches those profiles to job descriptions using vector similarity and multi-dimensional scoring.
+The ATS (Applicant Tracking System) is an AI-powered proof-of-concept application that demonstrates intelligent resume parsing and semantic candidate matching. The system processes unstructured PDF resumes into structured candidate profiles, then matches those profiles to job descriptions using a sophisticated multi-dimensional scoring algorithm with weighted skill types, role-specific matching, and category-based requirements.
 
 ### Key Metrics
 
@@ -25,6 +25,40 @@ The ATS (Applicant Tracking System) is an AI-powered proof-of-concept applicatio
 | **Concurrent Job Capacity** | 2+ (ThreadPoolExecutor) | ⚠️ Scalable to Celery |
 | **UI Response Time** | < 100ms | ✅ Excellent |
 | **API Latency** | ~2 seconds (job submission) | ✅ Fast |
+
+---
+
+## What's New in This Version
+
+This version of the ATS system introduces significant architectural improvements over the previous implementation:
+
+### Database Enhancements
+- **Extended MasterSkills Schema**: Added SkillCode, Tokens, Aliases, ParentSkillId, DisambiguationRules, and SkillType fields for better skill taxonomy
+- **Skill Type Weights**: New SkillTypeWeights and RoleSkillTypeWeights tables for role-specific skill weighting
+- **Evidence Tracking**: CandidateSkills now tracks JuniorMonths, MidMonths, SeniorMonths, EvidenceScore, and NormalizationConfidence
+- **Skill Implications**: New SkillImplications table for defining skill-to-skill relationships
+- **Soft Signals**: SoftSignals table for capturing subtle indicators (e.g., "AI-Assisted Development")
+- **Embedding Cache**: Enhanced EmbeddingCache with access tracking (CreatedAt, AccessedAt, AccessCount)
+
+### Matching Engine Improvements
+- **Eligibility Gate**: Hard filter applied before scoring to reduce computation
+- **Category-Based Matching**: Support for "any of" requirements (e.g., "React or Angular or Vue")
+- **Role-Specific Weights**: Different skill type weights based on role (backend_developer, frontend_developer, etc.)
+- **Primary Domains**: Structured domain classification (General, Backend, Frontend, Fullstack, DevOps, Cloud, AI_Engineer, GenAI_Developer, QA_Engineer, Architect)
+- **Seniority Levels**: Junior, Mid, Senior, Lead with specific thresholds
+- **Enhanced Score Breakdown**: Detailed per-skill contributions with competency scores
+
+### LLM Service Enhancements
+- **OllamaService Class**: Centralized service with retry logic and JSON schema validation
+- **Model Selection**: Different models for quick (gpt-oss:20b-cloud) and thinking (qwen3-next:80b-cloud) tasks
+- **JSON Extraction**: Automatic JSON extraction from LLM responses with markdown support
+- **Error Handling**: Comprehensive retry mechanisms with configurable delays
+
+### Normalization Layer
+- **Multi-Stage Matching**: Exact → Alias → Token/Rule → Vector matching cascade
+- **Disambiguation Rules**: Database-driven rules to prevent false positives/negatives
+- **Composite Skill Splitting**: Handles "HTML/CSS" as separate skills
+- **Normalization Cache**: SkillNormalizationCache table for performance
 
 ---
 
@@ -62,6 +96,10 @@ graph TB
         J[MasterSkills + Vectors]
         K[CandidateSkills]
         L[UnmappedSkills]
+        M[SkillTypeWeights]
+        N[RoleSkillTypeWeights]
+        O[SkillImplications]
+        P[EmbeddingCache]
     end
 
     A -->|Upload PDF/Submit JD| B
@@ -73,6 +111,9 @@ graph TB
     E -->|Generate Embeddings| H
     F -->|Parse JD| G
     F -->|Match Skills| J
+    F -->|Apply Weights| M
+    F -->|Role Weights| N
+    F -->|Eligibility Gate| K
     F -->|Search Candidates| K
     F -->|Fallback Search| L
     F -->|Update Job| D
@@ -94,8 +135,9 @@ graph TB
 | **Job Queue** | ThreadPoolExecutor | stdlib | Background processing |
 | **Database** | SQL Server | 2025 | Persistent storage + vectors |
 | **PDF Parser** | Docling | latest | Document parsing |
-| **LLM** | Ollama | latest | Local inference |
-| **Embeddings** | Nomic | embed-text | Vector generation |
+| **LLM (Quick)** | gpt-oss:20b-cloud | latest | Fast classifications |
+| **LLM (Thinking)** | qwen3-next:80b-cloud | latest | Complex reasoning |
+| **Embeddings** | nomic-embed-text | latest | Vector generation |
 
 ### Frontend
 
@@ -113,9 +155,9 @@ graph TB
 
 | Component | Model | Parameters | Purpose |
 |-----------|-------|-----------|---------|
-| **LLM (Fast)** | Qwen3 | 1.7B | Header classification |
-| **LLM (Thinking)** | Qwen3 | 14B | Experience extraction |
-| **Embeddings** | Nomic | 768D | Vector similarity |
+| **LLM (Fast)** | gpt-oss:20b-cloud | 20B | Quick classifications, header normalization |
+| **LLM (Thinking)** | qwen3-next:80b-cloud | 80B | Complex extraction, experience parsing |
+| **Embeddings** | nomic-embed-text | 768D | Vector similarity |
 
 ---
 
@@ -144,15 +186,17 @@ graph TB
    ↓
 10. Generate contextual embeddings
    ↓
-11. Match to MasterSkills (exact + vector search)
+11. Multi-stage skill matching (Exact → Alias → Token → Vector)
    ↓
-12. Upsert to CandidateSkills / UnmappedSkills
+12. Apply disambiguation rules
    ↓
-13. Update Job (status=completed, result=profile)
+13. Upsert to CandidateSkills / UnmappedSkills
    ↓
-14. Frontend polls, detects completion
+14. Update Job (status=completed, result=profile)
    ↓
-15. Redirect to results page
+15. Frontend polls, detects completion
+   ↓
+16. Redirect to results page
 ```
 
 ### Employer Matching Flow
@@ -166,28 +210,45 @@ graph TB
    ↓
 4. Submit to ThreadPoolExecutor
    ↓
-5. LLM extracts requirements (explicit + inferred skills)
+5. LLM extracts structured requirements:
+   - Primary domain
+   - Seniority level
+   - Skill requirements (explicit/inferred)
+   - Category requirements (flexible "any of")
    ↓
-6. For each requirement:
-   - Generate contextual embedding
-   - Search MasterSkills by vector distance
-   - Get MasterSkillID
-   - Query CandidateSkills by ID
-   - Query UnmappedSkills by keyword
-   - Calculate competency score (depth × recency × weight)
-   - Update leaderboard
+6. Load role-specific weights (RoleSkillTypeWeights)
    ↓
-7. Normalize scores to 0-100
+7. Eligibility Gate (HARD FILTER):
+   - For each hard requirement:
+     - Resolve skill tree (include child skills)
+     - Search CandidateSkills by MasterSkillID
+     - Apply seniority thresholds
+   - Filter out candidates not meeting hard requirements
    ↓
-8. Assign confidence labels (Strong/Good/Partial/Weak)
+8. Scoring Phase (eligible candidates only):
+   - For each requirement:
+     - Generate contextual embedding
+     - Search MasterSkills by vector distance
+     - Get MasterSkillID
+     - Query CandidateSkills by ID
+     - Calculate competency score:
+       * Depth score (months / 36, capped at 1.0)
+       * Recency score (1.0, 0.6, or 0.25 based on last used)
+       * Skill type weight (from SkillTypeWeights)
+       - Role skill type weight (from RoleSkillTypeWeights)
+     - Update leaderboard
    ↓
-9. Sort by score
+9. Normalize scores to 0-100
    ↓
-10. Update Job (status=completed, result=matches)
+10. Assign confidence labels (Strong/Good/Partial/Weak)
    ↓
-11. Frontend polls, detects completion
+11. Sort by score
    ↓
-12. Redirect to results page
+12. Update Job (status=completed, result=matches)
+   ↓
+13. Frontend polls, detects completion
+   ↓
+14. Redirect to results page
 ```
 
 ---
@@ -219,31 +280,58 @@ CREATE TABLE Jobs (
 ```sql
 CREATE TABLE Candidates (
     CandidateID INT PRIMARY KEY IDENTITY(1,1),
-    FullName NVARCHAR(255)
+    FullName NVARCHAR(255),
+    Status NCHAR(10),
+    DocumentName NVARCHAR(150),
+    DocumentHash NVARCHAR(150),
+    ExperienceJson JSON NULL
 )
 ```
 
-#### 3. MasterSkills (Taxonomy + Vectors)
+#### 3. MasterSkills (Enhanced Taxonomy)
 
 ```sql
 CREATE TABLE MasterSkills (
     SkillID INT PRIMARY KEY IDENTITY(1,1),
     SkillName NVARCHAR(255),
-    SkillType NVARCHAR(100),       -- 'programming language', 'framework', etc.
-    SkillVector VECTOR(768),        -- SQL Server 2025 native vector type
-    EscoURI NVARCHAR(500) NULL      -- European Skills/Competences taxonomy
+    Category NVARCHAR(255),
+    Information NVARCHAR(MAX),
+    SkillCode NVARCHAR(200),              -- NEW: Canonical code identifier
+    Tokens NVARCHAR(MAX),                 -- NEW: JSON array of tokens
+    Aliases NVARCHAR(MAX),                -- NEW: JSON array of aliases
+    ParentSkillId NVARCHAR(200),          -- NEW: Hierarchical relationships
+    DisambiguationRules NVARCHAR(MAX),    -- NEW: JSON rules for matching
+    SkillType NVARCHAR(100),              -- NEW: programming, framework, etc.
+    SkillVector VECTOR(768),              -- Contextual embedding
+    InformationVector VECTOR(768),        -- NEW: Description embedding
+    IsProgrammingLanguage BIT,
+    IsFramework BIT,
+    IsTool BIT,
+    Backend BIT,
+    Testing BIT
 )
 ```
 
-#### 4. CandidateSkills (Verified Skills)
+#### 4. CandidateSkills (Enhanced Evidence Tracking)
 
 ```sql
 CREATE TABLE CandidateSkills (
     CandidateSkillID INT PRIMARY KEY IDENTITY(1,1),
     CandidateID INT FOREIGN KEY,
     MasterSkillID INT FOREIGN KEY,
-    ExperienceMonths INT,           -- Total verified duration
-    LastUsedDate DATE               -- Most recent use
+    ExperienceMonths INT,
+    TotalMonths INT,                       -- NEW: Aggregate across all roles
+    JuniorMonths INT DEFAULT 0,            -- NEW: Junior-level experience
+    MidMonths INT DEFAULT 0,               -- NEW: Mid-level experience
+    SeniorMonths INT DEFAULT 0,            -- NEW: Senior-level experience
+    LastUsedDate DATE,
+    FirstUsedDate DATE,                    -- NEW: Earliest usage
+    MatchConfidence FLOAT,                 -- NEW: Matching confidence score
+    EvidenceSources NVARCHAR(255),         -- NEW: Source of evidence
+    EvidenceScore DECIMAL(4,2) DEFAULT 0.0, -- NEW: Strength of evidence
+    NormalizationConfidence DECIMAL(4,2),   -- NEW: Confidence in normalization
+    NormalizationMethod NVARCHAR(50),      -- NEW: exact, alias, rule, vector
+    MaxEvidenceStrength INT                -- NEW: Maximum evidence level
 )
 ```
 
@@ -251,29 +339,120 @@ CREATE TABLE CandidateSkills (
 
 ```sql
 CREATE TABLE UnmappedSkills (
-    CandidateSkillID INT PRIMARY KEY IDENTITY(1,1),
+    UnmappedSkillID INT PRIMARY KEY IDENTITY(1,1),
     CandidateID INT FOREIGN KEY,
-    RawSkillName NVARCHAR(255),     -- As extracted from resume
-    RoleTitle NVARCHAR(255),        -- Context
+    RawSkillName NVARCHAR(255),
+    RoleTitle NVARCHAR(255),
     ExperienceMonths INT,
-    LastUsedDate DATE
+    LastUsedDate DATE,
+    DiscoveryDate DATETIME,
+    ClosestMasterSkillID INT,              -- NEW: Reference to closest match
+    VectorDistance FLOAT                   -- NEW: Distance to closest match
 )
 ```
+
+#### 6. SkillTypeWeights (Base Weights)
+
+```sql
+CREATE TABLE SkillTypeWeights (
+    SkillType NVARCHAR(100) PRIMARY KEY,
+    BaseWeight DECIMAL(5,2) NOT NULL,      -- Base weight for skill type
+    Description NVARCHAR(255)
+)
+```
+
+**Example Weights**:
+- programming_language: 1.0
+- framework: 1.0
+- database: 1.0
+- cloud: 1.0
+- webframework: 1.0
+- testing: 0.9
+- tool: 0.8
+
+#### 7. RoleSkillTypeWeights (Role-Specific Weights)
+
+```sql
+CREATE TABLE RoleSkillTypeWeights (
+    RoleCode NVARCHAR(100) NOT NULL,       -- backend_developer, frontend_developer, etc.
+    SkillType NVARCHAR(100) NOT NULL,
+    WeightMultiplier DECIMAL(5,2) NOT NULL, -- Multiplier for this role/skill type combo
+    Description NVARCHAR(255),
+    PrimaryDomain NVARCHAR(50),
+    SeniorityLevel NVARCHAR(30),
+    CONSTRAINT PK_RoleSkillTypeWeights PRIMARY KEY (RoleCode, SkillType)
+)
+```
+
+**Example Weights**:
+| Role | Skill Type | Multiplier | Description |
+|------|-----------|------------|-------------|
+| backend_developer | programming_language | 1.15 | Primary backend language |
+| backend_developer | framework | 1.15 | Backend frameworks |
+| backend_developer | webframework | 0.80 | Frontend less critical |
+| frontend_developer | webframework | 1.20 | Frontend frameworks |
+| frontend_developer | database | 0.70 | Indirect DB usage |
+| devops_engineer | devops | 1.25 | Core responsibility |
+| ai_engineer | ai_specialization | 1.25 | LLM/ML focus |
+
+#### 8. SkillImplications (Skill Relationships)
+
+```sql
+CREATE TABLE SkillImplications (
+    FromSkillCode NVARCHAR(200) NOT NULL,  -- Having this skill...
+    ToSkillCode NVARCHAR(200) NOT NULL,    -- ...implies knowledge of this
+    Confidence FLOAT NOT NULL DEFAULT 1.0, -- Confidence in implication
+    Explanation NVARCHAR(255),
+    CONSTRAINT PK_SkillImplications PRIMARY KEY (FromSkillCode, ToSkillCode)
+)
+```
+
+**Purpose**: Define skill relationships. For example, knowing "Spring Boot" implies knowledge of "Java".
+
+#### 9. SoftSignals (Subtle Indicators)
+
+```sql
+CREATE TABLE SoftSignals (
+    SoftSignalId NVARCHAR(255) PRIMARY KEY,
+    Description NVARCHAR(500),
+    EvidenceRules NVARCHAR(MAX) NOT NULL,  -- JSON rules for detection
+    IsDisabled BIT DEFAULT 0
+)
+```
+
+**Example**: "AI-Assisted Development" - detected when resume mentions using ChatGPT, Copilot, etc.
+
+#### 10. EmbeddingCache (Performance)
+
+```sql
+CREATE TABLE EmbeddingCache (
+    CacheID INT IDENTITY(1,1) PRIMARY KEY,
+    InputText NVARCHAR(1000) NOT NULL UNIQUE,
+    Embedding VECTOR(768) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    AccessedAt DATETIME DEFAULT GETDATE(),  -- NEW: Track last access
+    AccessCount INT DEFAULT 1               -- NEW: Track usage frequency
+)
+```
+
+#### 11. Other Supporting Tables
+
+- **EvidenceTypes**: Defines evidence strength levels
+- **RoleSkillMappings**: Maps role patterns to skills with evidence types
+- **SkillNormalizationCache**: Caches normalization results
+- **Candidates**: Registry of all candidates
 
 ### Indexes
 
 ```sql
 CREATE INDEX IX_Jobs_Status ON Jobs(Status);
+CREATE INDEX IX_Jobs_JobType ON Jobs(JobType);
 CREATE INDEX IX_CandidateSkills_MasterSkillID ON CandidateSkills(MasterSkillID);
 CREATE INDEX IX_CandidateSkills_CandidateID ON CandidateSkills(CandidateID);
 CREATE INDEX IX_UnmappedSkills_CandidateID ON UnmappedSkills(CandidateID);
+CREATE INDEX IX_EmbeddingCache_InputText ON EmbeddingCache(InputText);
+CREATE INDEX IX_EmbeddingCache_AccessedAt ON EmbeddingCache(AccessedAt);
 ```
-
-**Why These Indexes?**
-- `Jobs.Status`: Polling queries (`WHERE status = 'processing'`)
-- `CandidateSkills.MasterSkillID`: Skill lookup during matching
-- `CandidateSkills.CandidateID`: Profile retrieval
-- `UnmappedSkills.CandidateID`: Fallback search
 
 ---
 
@@ -307,9 +486,24 @@ CREATE INDEX IX_UnmappedSkills_CandidateID ON UnmappedSkills(CandidateID);
     // OR Employer result
     matches: [{
       name: string,
+      candidate_id: number,
       score: number,        // 0-100
-      matches: string[],    // ["Java (verified)", "Docker (Inferred)"]
-      confidence: string    // "Strong Match" | "Good Match" | ...
+      matches: string[],    // ["Java (verified)", "Docker (inferred)"]
+      confidence: string,   // "Strong Match" | "Good Match" | ...
+      skill_breakdown: [{
+        skill_name: string,
+        match_type: string,
+        type: string,
+        last_used_date: string,
+        weight: number,
+        experience_months: number,
+        recency_score: number,
+        competency_score: number,
+        contribution_to_total: number
+      }],
+      total_jd_skills: number,
+      matched_skill_count: number,
+      unmatched_skill_count: number
     }],
     role_context: string | {primary_domain, seniority_level}
   },
@@ -325,9 +519,9 @@ CREATE INDEX IX_UnmappedSkills_CandidateID ON UnmappedSkills(CandidateID);
 ### Formula
 
 ```
-Candidate Score = Σ (Depth × Recency × Weight)
-                  ─────────────────────────────
-                        Max Possible Score
+Candidate Score = Σ (Depth × Recency × SkillTypeWeight × RoleSkillTypeWeight)
+                  ──────────────────────────────────────────────────────────
+                                        Max Possible Score
 ```
 
 ### Components
@@ -355,30 +549,36 @@ else:
     recency = 0.25
 ```
 
-#### 3. Weight (0.4-1.0)
+#### 3. Skill Type Weight (Base Weight)
 
 ```python
-weight = 1.0 if requirement_type == 'Explicit' else 0.4
+weight = skill_type_weights[skill_type]  # From SkillTypeWeights table
 ```
 
-#### 4. Normalization
+#### 4. Role Skill Type Weight (Role Multiplier)
 
 ```python
-final_score = (raw_score / max_possible_score) × 100
+role_weight = role_weights[skill_type]  # From RoleSkillTypeWeights table
+```
+
+#### 5. Final Weight
+
+```python
+final_weight = base_weight × role_multiplier
 ```
 
 ### Example Calculation
 
-| Requirement | Candidate Exp. | Last Used | Type | Depth | Recency | Weight | Score |
-|-------------|----------------|-----------|------|-------|---------|--------|-------|
-| Java (36 mo) | 48 mo | 2 mo ago | Explicit | 1.0 | 1.0 | 1.0 | 1.00 |
-| Spring (24 mo) | 18 mo | 6 mo ago | Explicit | 0.5 | 1.0 | 1.0 | 0.50 |
-| Docker (12 mo) | 12 mo | 1 mo ago | Inferred | 0.33 | 1.0 | 0.4 | 0.13 |
-| **Total** | | | | | | | **1.63** |
+| Requirement | Candidate Exp. | Last Used | Base Weight | Role Multiplier | Final Weight | Calculation | Score |
+|-------------|----------------|-----------|-------------|-----------------|--------------|-------------|-------|
+| Java (backend dev) | 48 mo | 2 mo ago | 1.0 | 1.15 | 1.15 | 1.0 × 1.0 × 1.15 | **1.15** |
+| Spring (backend dev) | 18 mo | 6 mo ago | 1.0 | 1.15 | 1.15 | 0.5 × 1.0 × 1.15 | **0.58** |
+| React (backend dev) | 12 mo | 1 mo ago | 1.0 | 0.80 | 0.80 | 0.33 × 1.0 × 0.80 | **0.26** |
+| **Total** | | | | | | | **1.99** |
 
-**Max Possible** = 1.0 + 1.0 + 0.4 = 2.4
+**Max Possible** = 1.15 + 1.15 + 0.80 = 3.10
 
-**Final Score** = (1.63 / 2.4) × 100 = **68%**
+**Final Score** = (1.99 / 3.10) × 100 = **64%**
 
 **Confidence** = "Good Match"
 
@@ -386,88 +586,94 @@ final_score = (raw_score / max_possible_score) × 100
 
 ## Key Design Decisions
 
-### 1. Why Polling Instead of WebSockets?
+### 1. Why Eligibility Gate Before Scoring?
 
-**Decision**: Polling every 2 seconds
-
-**Rationale**:
-- Simpler implementation (no WebSocket server)
-- Stateless HTTP requests (easier caching, scaling)
-- Sufficient for demo (2-second latency acceptable)
-- No infrastructure complexity (no sticky sessions, load balancer config)
-
-**When to Upgrade**:
-- 1000+ concurrent users
-- Sub-second latency requirement
-- Real-time collaboration features
-
-### 2. Why ThreadPoolExecutor Instead of Celery?
-
-**Decision**: In-process `ThreadPoolExecutor(max_workers=2)`
+**Decision**: Filter candidates using hard requirements before calculating scores.
 
 **Rationale**:
-- Zero infrastructure (no Redis/RabbitMQ)
-- Sufficient for POC (2 concurrent jobs)
-- Simpler deployment (single process)
-- Easier debugging (no separate worker process)
+- Performance: Score only relevant candidates
+- User Experience: Don't show candidates missing mandatory skills
+- Clarity: Separate "qualified" from "ranked"
 
-**When to Upgrade**:
-- Production workload (100+ jobs/day)
-- Priority queues (high/medium/low)
-- Distributed workers (multiple servers)
-- Job retries and dead letter queues
-
-### 3. Why SQL Server 2025 Instead of Vector DB?
-
-**Decision**: Native `VECTOR(768)` type in SQL Server
-
-**Rationale**:
-- Single database (no Pinecone/Weaviate)
-- Vector search in same query as metadata (no network hop)
-- ACID transactions (vectors consistent with data)
-- Lower cost (no separate service)
-
-**Trade-offs**:
-- Vector search speed: ~10ms vs ~1ms (specialized DB)
-- ANN indexing: HNSW coming in SQL Server 2025
-- For POC: 10ms is acceptable
-
-### 4. Why Manual Date Calculation Instead of LLM?
-
-**Decision**: `dateutil.relativedelta` in Python
-
-**Rationale**:
-- Deterministic (same input = same output)
-- No hallucination (LLMs can make math errors)
-- Explainable (can show calculation)
-- Faster (no API call)
-
-**Example**:
-```
-Input: "06/2014 - 08/2017"
-LLM: "3 years" (wrong, actually 3 years 2 months)
-Python: 38 months (exact)
+**Implementation**:
+```python
+eligible_ids = engine.get_eligible_candidates(jd_profile)
+# Only score eligible candidates
+for candidate_id in eligible_ids:
+    score, breakdown = engine._score_candidate(candidate_id, jd_profile)
 ```
 
-### 5. Why Contextual Embeddings?
+### 2. Why Role-Specific Skill Weights?
 
-**Decision**: `f"Skill: {skill} | Domain: {domain} | Role: {role}"`
+**Decision**: Different skill types have different importance based on the target role.
 
 **Rationale**:
-- Disambiguation ("Java" = programming, not coffee)
-- Domain awareness (Python for backend vs data science)
-- Better matching (candidate with relevant experience ranks higher)
+- A React framework skill is more important for frontend developers (1.20x) than backend (0.80x)
+- Programming languages are critical for backend (1.15x) but less so for DevOps (0.80x)
+- Produces more relevant rankings
 
-**Example**:
-```
-Without context:
-"Java" → Generic vector
-Matches: All Java developers (backend, data, mobile, Android)
+**Database Storage**: RoleSkillTypeWeights table allows configuration without code changes.
 
-With context:
-"Java | backend | microservices" → Backend-focused vector
-Matches: Java backend developers with microservices experience
+### 3. Why Category-Based Requirements?
+
+**Decision**: Support flexible "any of" requirements (e.g., "React or Angular or Vue").
+
+**Rationale**:
+- JDs often say "at least one frontend framework such as..."
+- Candidates may know different frameworks in the same category
+- Prevents false negatives
+
+**LLM Output**:
+```json
+{
+  "type": "CategoryRequirement",
+  "category": "Frontend Framework",
+  "min_required": 1,
+  "example_skills": ["React", "Angular", "Vue"]
+}
 ```
+
+### 4. Why Multi-Stage Skill Matching?
+
+**Decision**: Exact → Alias → Token → Vector matching cascade.
+
+**Rationale**:
+| Stage | Cost | Accuracy | Use Case |
+|-------|------|----------|----------|
+| Exact | ~0ms | 100% | Perfect matches ("Java" == "Java") |
+| Alias | ~0ms | 95% | Known variants ("C#" == "csharp") |
+| Token | ~1ms | 90% | Partial matches ("asp net mvc") |
+| Vector | ~10ms | 85% | Semantic similarity ("React.js" ≈ "React") |
+
+- Fast path for common cases
+- Fallback to expensive vector search only when needed
+- Prevents false positives with disambiguation rules
+
+### 5. Why Seniority Month Breakdown?
+
+**Decision**: Track JuniorMonths, MidMonths, SeniorMonths separately.
+
+**Rationale**:
+- Same skill at different levels has different value
+- Senior Java experience (24 months) more valuable than Junior Java (24 months)
+- Enables seniority-specific matching
+
+**Query**:
+```python
+if jd_seniority == "Senior":
+    min_senior_months = SENIORITY_THRESHOLDS["Senior"]["min_senior_months"]  # 12
+    # Candidate must have 12+ months of senior-level experience
+```
+
+### 6. Why Embedding Cache with Access Tracking?
+
+**Decision**: Track CreatedAt, AccessedAt, and AccessCount.
+
+**Rationale**:
+- **Performance**: Skip Ollama API call for repeated embeddings
+- **Analytics**: Identify most/least used embeddings
+- **Maintenance**: Clean up stale cache entries
+- **Optimization**: Pre-warm cache with frequently used terms
 
 ---
 
@@ -478,25 +684,25 @@ Matches: Java backend developers with microservices experience
 | Stage | Time | Bottleneck |
 |-------|------|------------|
 | PDF parsing (Docling) | ~2s | I/O |
-| LLM header normalization | ~0.1s | Qwen3:1.7B |
-| LLM identity extraction | ~0.5s | Qwen3:14B |
-| LLM experience extraction | ~3s | Qwen3:14B |
+| LLM header normalization | ~0.5s | gpt-oss:20b-cloud |
+| LLM identity extraction | ~1s | qwen3-next:80b-cloud |
+| LLM experience extraction | ~4s | qwen3-next:80b-cloud |
 | Duration calculation | <0.1s | Python |
-| Embedding generation | ~5s | Nomic (768D × ~20 skills) |
-| Vector search (SQL Server) | ~1s | ~20 skills × ~10ms each |
+| Embedding generation | ~5s | nomic-embed-text (cached) |
+| Multi-stage skill matching | ~2s | DB queries |
 | DB upsert | ~1s | SQL Server |
-| **Total** | **~12s** | - |
+| **Total** | **~15s** | - |
 
 ### Employer Matching
 
 | Stage | Time | Bottleneck |
 |-------|------|------------|
-| LLM JD parsing | ~2s | Qwen3:14B |
-| Embedding generation | ~0.5s | Nomic (768D × ~10 skills) |
-| Vector search (SQL Server) | ~0.1s | ~10 skills × ~10ms each |
-| Candidate lookup | ~0.5s | SQL Server (indexed) |
-| Score calculation | <0.1s | Python |
-| **Total** | **~3s** | - |
+| LLM JD parsing | ~3s | qwen3-next:80b-cloud |
+| Load weights | ~0.1s | SQL Server |
+| Eligibility gate | ~1s | SQL Server (indexed) |
+| Scoring (eligible only) | ~2s | SQL Server + Python |
+| Normalization | <0.1s | Python |
+| **Total** | **~6s** | - |
 
 ### Frontend
 
@@ -572,158 +778,7 @@ Matches: Java backend developers with microservices experience
 
 ---
 
-## Testing Strategy
-
-### Unit Tests (Not Yet Implemented)
-
-```python
-# Example: postprocessor.py
-def test_calculate_duration():
-    assert calculate_duration("01/2020", "06/2020") == 5
-    assert calculate_duration("01/2020", "Present", ref_date="2026-01-01") == 72
-```
-
-### Integration Tests
-
-```python
-# Example: MatchingEngine.py
-def test_rank_candidates():
-    engine = SOTAMatchingEngine(test_db)
-    results = engine.rank_candidates("Java developer with 3 years experience")
-    assert len(results) > 0
-    assert results[0]["score"] > 0
-```
-
-### End-to-End Tests
-
-```typescript
-// Example: Playwright/Cypress
-test('candidate processing flow', async ({ page }) => {
-  await page.goto('/candidate');
-  await page.setInputFiles('input[type="file"]', 'resume.pdf');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('/progress/*');
-  await page.waitForSelector('text=Resume processed successfully');
-  await page.waitForURL('/candidate/result/*');
-  expect(page.locator('text=John Doe')).toBeVisible();
-});
-```
-
----
-
-## Monitoring & Observability
-
-### Metrics to Track
-
-| Metric | Type | Purpose |
-|--------|------|---------|
-| **Job Processing Time** | Histogram | Performance |
-| **Job Success Rate** | Gauge | Reliability |
-| **LLM API Latency** | Histogram | External dependency |
-| **DB Query Time** | Histogram | Database health |
-| **Active Jobs** | Gauge | Queue depth |
-| **Error Rate** | Counter | Quality |
-
-### Logging Strategy
-
-```python
-import logging
-
-logger = logging.getLogger(__name__)
-
-logger.info("Job submitted", extra={"job_id": job_id, "type": "candidate"})
-logger.error("Processing failed", extra={"job_id": job_id, "error": str(e)})
-```
-
-### Health Checks
-
-```python
-@app.get("/health")
-async def health():
-    # Check: DB connection, Ollama availability, disk space
-    return {"status": "healthy", "timestamp": datetime.now()}
-```
-
----
-
-## Deployment Architecture
-
-### Development
-
-```
-localhost:5173 (Vite dev server)
-    ↓
-localhost:8000 (FastAPI with reload)
-    ↓
-localhost:11434 (Ollama)
-    ↓
-localhost:1433 (SQL Server)
-```
-
-### Production (Recommended)
-
-```
-[Cloudflare CDN]
-    ↓
-[Nginx] → Serve static files, proxy /api
-    ↓
-[Gunicorn + Uvicorn workers] → API server
-    ↓
-[Celery workers] → Background jobs
-    ↓
-[Redis] → Task queue broker
-    ↓
-[SQL Server] → Primary database
-```
-
----
-
-## Lessons Learned
-
-### What Worked Well
-
-1. **Docling for PDF Parsing**
-   - Handles diverse resume formats
-   - Structure-aware (sections, headers)
-   - Better than PyPDF2/pdfplumber
-
-2. **Contextual Embeddings**
-   - Disambiguates skills
-   - Domain-aware matching
-   - Better candidate ranking
-
-3. **Manual Date Calculation**
-   - Deterministic results
-   - No LLM hallucinations
-   - Explainable to users
-
-4. **Two-Path Skill Search**
-   - MasterSkills (exact match)
-   - UnmappedSkills (fuzzy match)
-   - No data loss
-
-### What Could Be Improved
-
-1. **LLM Accuracy**
-   - Date extraction errors (requires prompts)
-   - Technology name variations
-   - → Fine-tune model on resume dataset
-
-2. **Vector Search Speed**
-   - 10ms per query (SQL Server)
-   - → Upgrade to Pinecone for ANN
-
-3. **Polling Latency**
-   - 2-second intervals
-   - → Upgrade to WebSockets for real-time
-
-4. **Error Recovery**
-   - Jobs fail silently
-   - → Add retry logic, dead letter queue
-
----
-
-## Future Roadmap
+## Future Enhancements
 
 ### Short-Term (1-3 months)
 
@@ -760,6 +815,9 @@ The ATS system demonstrates a production-ready architecture for AI-powered resum
 3. **Explainable AI**: Every score traceable
 4. **Type Safety**: TypeScript + Pydantic
 5. **Modern Stack**: React, FastAPI, SQL Server 2025
+6. **Enhanced Matching**: Role-specific weights, category requirements
+7. **Evidence Tracking**: Detailed provenance for all skills
+8. **Performance**: Caching, indexing, eligibility gates
 
 The system is ready for POC demonstration and has a clear upgrade path to production scale.
 
@@ -768,9 +826,9 @@ The system is ready for POC demonstration and has a clear upgrade path to produc
 ## Document Authors
 
 - **Architecture**: Generated by Claude (Anthropic)
-- **Codebase**: ATS Web Application
+- **Codebase**: ATS Web Application (Revised)
 - **Date**: January 2026
-- **Version**: 1.0.0
+- **Version**: 2.0.0
 
 ---
 
@@ -779,5 +837,4 @@ The system is ready for POC demonstration and has a clear upgrade path to produc
 - [Candidate Resume Processor Architecture](./01_candidate_resume_processor_architecture.md)
 - [Employer Matching System Architecture](./02_employer_matching_system_architecture.md)
 - [Frontend UI Architecture](./03_frontend_ui_architecture.md)
-- [Product Requirements Document](../ats_poc_product_requirements_document_prd.md)
-- [README & Setup Guide](../README.md)
+- [README & Setup Guide](../../README.md)
